@@ -1,18 +1,11 @@
-# public_release/에서 Sage 환경의 Python으로 height 곡선 목록을 생성한다.
-#   python src/make_height_family.py
-# --output은 height_family.json.gz를 저장할 폴더다. 기본은 public_release/data/다.
-#
-# enumerate_family()는 높이 H = max(4*abs(A)**3, 27*B**2)의 상한으로
-# 정수 short model y^2 = x^3 + A*x + B의 계수 A, B 범위를 정한다.
-# 곡선은 H가 목표 shell [X, 2X)에 속하고 판별식이 0이 아니며 primitive일 때 포함된다.
-# primitive()는 어떤 소수 q에 대해 q^4 | A와 q^6 | B가 동시에 성립하는지 검사한다.
-#
-# 각 레코드에 원래 계수 A, B와 높이, Sage의 global minimal model 계수,
-# conductor, root number, CM 여부를 함께 기록한다.
-# 이 파일을 입력으로 쓰는 다음 단계는 recompute_data.py --family height다.
-# 곡선 목록을 읽고 검사하는 함수는 bvst_data.py의 load_family()와 check_family()다.
+# Enumerate primitive integral short models in the target height shells.
+# A model is included if H = max(4*abs(A)**3, 27*B**2) is in a shell
+# [X, 2X), the discriminant is nonzero, and no prime q satisfies both
+# q^4 | A and q^6 | B. No CM exclusion is applied.
+# Save A, B, height, the Sage global minimal model, conductor, root number
+# and CM status for each curve.
 
-"""Primitive integral short model을 CM 제외 없이 유한 box에서 독립 열거한다."""
+"""Independently enumerate the primitive height family, including CM curves."""
 import argparse
 import gzip
 import math
@@ -20,7 +13,7 @@ import os
 from pathlib import Path
 import sys
 
-from bvst_data import BASE, SCALES, check_family, encoded, refresh_readme
+from bvst_data import BASE, SCALES, check_family, encoded
 from reproduction_io import save_outputs
 
 
@@ -64,9 +57,9 @@ def enumerate_family(scales=SCALES):
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--output', type=Path, default=BASE/'data')
+    p.add_argument('--output-dir', '--output', type=Path, default=BASE/'work/reproduced/inputs',
+                   help='directory for height_family.json.gz (default: work/reproduced/inputs/)')
     args = p.parse_args()
     rows = enumerate_family()
-    save_outputs(args.output, {'height_family.json.gz': gzip.compress(encoded(rows), mtime=0)})
-    refresh_readme()
+    save_outputs(args.output_dir, {'height_family.json.gz': gzip.compress(encoded(rows), mtime=0)})
     print('height family:', len(rows), 'curves; CM included', flush=True)

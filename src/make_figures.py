@@ -1,21 +1,16 @@
-# public_release/에서 python src/make_figures.py를 실행하면 집계 NPZ로 그림을 만든다.
-# main()은 bvst_data.py의 verify()를 먼저 호출하고, build_figures()는
-# data/conductor.npz와 data/height.npz 중 존재하는 파일에서 그릴 패널을 정한다.
-#
-# amplitude()는 네 shell의 B를 bin 중점 v_J에 대해 그린다.
-# shape()는 마지막 shell(X=40000)에서 선택된 bin마다 A(t)/B를 그린다.
-# Weighted 그림에는 eligible, unweighted 그림에는 common_reliable_bins를 쓴다.
-# 비교 곡선인 tilt와 translation의 공식은 trace_normalization.py에 있다.
-#
-# 두 family의 NPZ가 있으면 그림 일곱 장을 각각 PNG와 PDF로 plots/에 저장한다.
-# 그림 파일명은 기존 원고의 참조에 맞춘다.
-# 어떤 집계 배열이 어느 그림에 들어가는지 보려면 build_figures()부터 읽으면 된다.
-# 저장 단계는 reproduction_io.py의 save_outputs()를 사용한다.
+"""Regenerate the paper figures from validated aggregate NPZ files."""
 
+# amplitude() plots B against the bin midpoint for all four shells.
+# shape() plots A(t)/B for selected bins in the final shell (X=40000).
+# Weighted shapes use eligible; unweighted shapes use common_reliable_bins.
+# The manuscript's basenames are retained for the PNG and PDF exports.
+
+import argparse
 import os
+from pathlib import Path
 from io import BytesIO
-from bvst_data import BASE, load_profiles, refresh_readme, verify
-from reproduction_io import save_outputs
+from bvst_data import BASE, load_profiles, verify
+from reproduction_io import artifact_arguments, save_outputs
 from trace_normalization import tilt_template, translation_template
 
 os.environ.setdefault('MPLCONFIGDIR', '/tmp/bvst-public-cm-mpl')
@@ -67,18 +62,18 @@ def shape(d, mode, mask, letter, translation):
     return fig
 
 
-def build_figures(root=BASE):
+def build_figures(root=BASE, *, data_dir=None, kinds=('conductor', 'height')):
     style()
     figures = {}
-    if (root/'data/conductor.npz').exists():
-        d = load_profiles('conductor', root)
+    if 'conductor' in kinds:
+        d = load_profiles('conductor', root, data_dir=data_dir)
         figures.update({
             '01_B_conductor_full_range': amplitude(d, d['B_weighted'], 'N'),
             '02_normalized_shape_Y40000_full_range': shape(d, 'weighted', d['eligible'][-1], 'N', True),
             '05_A_over_B0_all_common_reliable_X40000': shape(d, 'unweighted', d['common_reliable_bins'][-1], '{0}', False),
             'B0_conductor_multiscale_full_range': amplitude(d, d['B_unweighted'], '{0}')})
-    if (root/'data/height.npz').exists():
-        d = load_profiles('height', root)
+    if 'height' in kinds:
+        d = load_profiles('height', root, data_dir=data_dir)
         figures.update({
             '01_B_height_full_range': amplitude(d, d['B_weighted'], 'H'),
             '02_normalized_shape_X40000_full_range': shape(d, 'weighted', d['eligible'][-1], 'H', True),
@@ -87,9 +82,12 @@ def build_figures(root=BASE):
     return figures
 
 
-def main(root=BASE):
-    verify(root)
-    figures = build_figures(root)
+def main(root=BASE, *, data_dir=None, family_dir=None, output_dir=None, kinds=('conductor', 'height')):
+    root = Path(root)
+    if output_dir is None:
+        output_dir = root/'work/reproduced/plots'
+    verify(root, data_dir=data_dir, family_dir=family_dir, kinds=kinds)
+    figures = build_figures(root, data_dir=data_dir, kinds=kinds)
     try:
         outputs = {}
         for stem, fig in figures.items():
@@ -98,12 +96,12 @@ def main(root=BASE):
                 metadata = {'CreationDate': None, 'ModDate': None} if ext == 'pdf' else {}
                 fig.savefig(f, format=ext, dpi=300, metadata=metadata)
                 outputs[f'{stem}.{ext}'] = f.getvalue()
-        save_outputs(root/'plots', outputs)
-        refresh_readme(root)
-        print('figures:', len(figures), 'PNG/PDF files:', len(outputs), flush=True)
+        save_outputs(output_dir, outputs)
+        print('figures:', len(figures), 'PNG/PDF files:', len(outputs), 'in', output_dir, flush=True)
     finally:
         for fig in figures.values(): plt.close(fig)
 
 
 if __name__ == '__main__':
-    main()
+    args = artifact_arguments(argparse.ArgumentParser(description=__doc__), 'plots')
+    main(**args)

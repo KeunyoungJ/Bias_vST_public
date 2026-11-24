@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.cache/
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+.lock
+.run-*.tmp
+/work/
+.DS_Store
+.ipynb_checkpoints/

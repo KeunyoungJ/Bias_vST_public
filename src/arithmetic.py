@@ -1,18 +1,15 @@
-# recompute_data.py가 곡선 집합, 계산 범위, 작업 폴더, 실행 한도를 run()에 넘긴다.
-# run()은 bvst_data.py에서 고정 곡선 목록과 격자를 읽고, shell별로
-# 곡선 목록의 레코드를 최대 64개씩 묶어 calculate_chunk()에 보낸다.
+# Compute elliptic curve trace profiles from a frozen family snapshot. run()
+# sends batches of at most 64 representatives per shell to calculate_chunk().
+# Sage supplies a_p and the root number w, including for CM curves.
+# profile() bins good primes p >= 5 by v = p/N(E), and computes each curve's
+# A, B, and C using z = w*a_p/(2*sqrt(p)). The weighted and unweighted
+# statistics share the same a_p. For the conductor ordering, each isogeny
+# class representative contributes with its curve multiplicity.
 #
-# calculate_chunk()는 CM 곡선을 포함해 각 곡선의 a_p와 root number w를 Sage로 구한다.
-# profile()은 good prime p >= 5를 v = p/N(E) 기준으로 구간에 배정하고,
-# z = w*a_p/(2*sqrt(p))로 곡선별 A, B, 정규화 계수 C를 계산한다.
-# 같은 a_p에서 weighted와 unweighted를 함께 집계하며, conductor 집합에서는
-# isogeny class 대표가 나타내는 곡선 수만큼 각 기여도에 multiplicity를 반영한다.
-#
-# 계수와 누적 합은 batch마다 작업 폴더의 coefficients.sqlite에 함께 저장한다.
-# 재개할 때는 입력·소스 해시와 환경을 확인하고 저장된 위치부터 이어간다.
-# finalize()에서 곡선 단위 평균과 표준오차, 그림에 사용할 bin 선택 mask를 만든다.
-# 완료한 full 결과는 data/{family}.npz, smoke 결과는 작업 폴더의 {family}.npz에 둔다.
-# 이 집계 결과를 쓰는 부분은 make_figures.py와 make_tables.py에서 볼 수 있다.
+# Coefficients and accumulated moments are committed together to SQLite.
+# Resuming checks the input, source hashes and numerical environment.
+# finalize() computes curve-level means, standard errors and selection masks.
+# Completed NPZ results are written separately from the bundled inputs.
 
 from collections import deque
 from concurrent.futures import ProcessPoolExecutor
@@ -31,7 +28,7 @@ import zlib
 
 import numpy as np
 from bvst_data import (BASE, SCHEMA, SCALES, check_family, encoded, grid, load_family,
-                      pack, refresh_readme, sha, unpack)
+                      pack, sha, unpack)
 from reproduction_io import save_outputs
 
 STOP = False
@@ -58,7 +55,7 @@ def initialize_worker(primes, t):
 
 
 def profile(n, primes, ap, w, t):
-    """정수 비교로 [left,right)를 배정하고 g의 atom에는 절반의 무게를 쓴다."""
+    """Bin by integer comparisons on [left, right) and use half weight at atoms of g."""
     good = (primes >= 5) & (n % primes != 0) & (100*primes >= 2*n) & (primes < n)
     p, a = primes[good], ap[good].astype(np.int64)
     j = (100*p//n-2).astype(np.int64)
@@ -106,7 +103,7 @@ def calculate_chunk(job):
         assert len(ap) == size and np.all(ap.astype(np.int64)**2 <= 4*PRIMES[:size])
         d = profile(n, PRIMES[:size], ap, w, T)
         m = r.get('multiplicity', 1)
-        # g_t 는 odd이므로 unweighted A=w*A_weighted; 두 모드의 제곱은 같다.
+        # Because g_t is odd, the unweighted A is w times the weighted A; their squares agree.
         for name, values in [('Aw', d['A']), ('Au', w*d['A']), ('A2', d['A']**2),
                              ('Bw', d['B']), ('Bu', w*d['B']), ('B2', d['B']**2),
                              ('C', d['C']), ('C2', d['C']**2), ('pairs', d['pairs'])]:
@@ -170,20 +167,26 @@ def storage_bytes(roots):
 
 
 def run(kind, workdir, scope='smoke', workers=1, sample=3, max_seconds=0,
-        max_batches=0, budget_roots=(), max_bytes=10*1024**3, root=BASE):
+        max_batches=0, budget_roots=(), max_bytes=10*1024**3, root=BASE, *,
+        family_dir=None, output_dir=None):
     global STOP
     STOP = False
     environment()
     import sage.version
     from sage.all import prime_range
     root, workdir = Path(root), Path(workdir)
-    all_rows = load_family(kind, root)
+    family_dir = root/'data' if family_dir is None else Path(family_dir)
+    if output_dir is None:
+        output_dir = root/'work/reproduced/data' if scope == 'full' else workdir
+    else:
+        output_dir = Path(output_dir)
+    all_rows = load_family(kind, root, family_dir=family_dir)
     check_family(kind, all_rows)
     rows = select(all_rows, scope, sample)
     sources = {name: (Path(__file__).parent/name).read_bytes().decode() for name in
                ('arithmetic.py', 'bvst_data.py', 'recompute_data.py', 'reproduction_io.py')}
     identity = {'schema': SCHEMA, 'kind': kind, 'scope': scope, 'sample': sample if scope == 'smoke' else None,
-                'family_sha256': sha((root/f'data/{kind}_family.json.gz').read_bytes()),
+                'family_sha256': sha((family_dir/f'{kind}_family.json.gz').read_bytes()),
                 'source_sha256': {name: sha(raw.encode()) for name, raw in sources.items()},
                 'sage': sage.version.version, 'numpy': np.__version__,
                 'shell': '[X,2X)', 'bins': '(j+2)N<=100p<(j+3)N', 'trace_divisor': 2,
@@ -210,7 +213,7 @@ def run(kind, workdir, scope='smoke', workers=1, sample=3, max_seconds=0,
                 primes = np.asarray(list(prime_range(2, maximum+1)), dtype=np.int64)
                 t = grid(kind)['t_grid']
                 initialize_worker(primes, t)
-                # 초기화에서 worker용 SIGINT 무시를 설정했으므로 parent handler를 복구한다.
+                # Restore the parent handler after starting workers that ignore SIGINT.
                 signal.signal(signal.SIGINT, stop)
                 status, reason, committed, fresh = 'COMPLETE', None, 0, 0
                 last_print = 0.
@@ -271,9 +274,8 @@ def run(kind, workdir, scope='smoke', workers=1, sample=3, max_seconds=0,
                 output = None
                 if status == 'COMPLETE':
                     result = finalize(db, kind, rows, identity)
-                    output = root/f'data/{kind}.npz' if scope == 'full' else workdir/f'{kind}.npz'
+                    output = output_dir/f'{kind}.npz'
                     save_outputs(output.parent, {output.name: pack(result)})
-                    refresh_readme(root)
                 p = workdir/'run.json'
                 previous = json.loads(p.read_bytes()) if p.exists() else {'history': []}
                 event = {'status': status, 'reason': reason, 'new_coefficients': fresh, 'new_batches': committed,

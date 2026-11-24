@@ -1,20 +1,17 @@
-# public_release/에서 python src/make_tables.py를 실행하면 집계 NPZ로 표를 만든다.
-# main()은 bvst_data.py에서 data/conductor.npz와 data/height.npz를 읽고,
-# 존재하는 family별로 sample_counts_{family}.csv를 data/에 저장한다.
-# 각 행은 한 shell의 곡선 수와 전체 bin에 걸친 curve–prime pair 수를 담는다.
-#
-# Conductor의 Table 1은 residual_quartiles()에서 계산한다. 마지막 shell(X=40000)의
-# common_reliable_bins에 대해 weighted와 unweighted 각각 A(t) - B*tilt(t)를 구한다.
-# 잔차의 L2 크기를 t 격자에서 사다리꼴 공식으로 계산하고, 이를 |B|로 나눈 값도 구한다.
-# 각 값의 bin 방향 사분위수를 data/table1_residuals.csv에 기록한다.
-#
-# tilt 공식은 trace_normalization.py, CSV 저장 규칙은 reproduction_io.py에 있다.
+"""Regenerate the sample-count tables and Table 1 from aggregate NPZ files."""
 
+# Sample counts give the number of curves and curve-prime pairs per shell.
+# Table 1 uses the common reliable bins of the final conductor shell. It
+# records quartiles across bins of the L2 residual A(t) - B*tilt(t), computed
+# by trapezoidal integration, and of the residual normalized by |B|.
+
+import argparse
 import csv
+from pathlib import Path
 from io import StringIO
 import numpy as np
-from bvst_data import BASE, load_profiles, refresh_readme, verify
-from reproduction_io import save_outputs
+from bvst_data import BASE, load_profiles, verify
+from reproduction_io import artifact_arguments, save_outputs
 from trace_normalization import tilt_template
 
 
@@ -36,21 +33,23 @@ def residual_quartiles(d):
     return sorted(rows, key=lambda row: (row[1] == 'relative', row[0] == 'unweighted'))
 
 
-def main(root=BASE):
-    verify(root)
+def main(root=BASE, *, data_dir=None, family_dir=None, output_dir=None, kinds=('conductor', 'height')):
+    root = Path(root)
+    if output_dir is None:
+        output_dir = root/'work/reproduced/tables'
+    verify(root, data_dir=data_dir, family_dir=family_dir, kinds=kinds)
     outputs = {}
-    for kind in ('conductor', 'height'):
-        if not (root/f'data/{kind}.npz').exists(): continue
-        d = load_profiles(kind, root)
+    for kind in kinds:
+        d = load_profiles(kind, root, data_dir=data_dir)
         rows = [(int(x), int(d['curves'][i]), int(d['prime_curve_pairs'][i].sum())) for i, x in enumerate(d['scales'])]
         outputs[f'sample_counts_{kind}.csv'] = csv_bytes(['X', 'curves', 'pairs'], rows)
         if kind == 'conductor':
             outputs['table1_residuals.csv'] = csv_bytes(['weighting', 'norm', 'Q1', 'median', 'Q3'], residual_quartiles(d))
     if not outputs: raise ValueError('Compute conductor or height first')
-    save_outputs(root/'data', outputs)
-    refresh_readme(root)
-    print('tables:', len(outputs), 'CSV files', flush=True)
+    save_outputs(output_dir, outputs)
+    print('tables:', len(outputs), 'CSV files in', output_dir, flush=True)
 
 
 if __name__ == '__main__':
-    main()
+    args = artifact_arguments(argparse.ArgumentParser(description=__doc__), 'tables')
+    main(**args)
