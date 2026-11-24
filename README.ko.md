@@ -7,7 +7,7 @@
 
 ## 현재 파일 위치와 역할
 
-현재 파일 목록에는 **35개**의 파일이 있다. 표의 경로는 저장소 루트 기준이다.
+현재 파일 목록에는 **36개**의 파일이 있다. 표의 경로는 저장소 루트 기준이다.
 파일을 추가·삭제·이동·이름 변경할 때 이 목록과 입출력 설명을 함께 갱신한다.
 
 ```text
@@ -17,6 +17,7 @@
 ├── README.ko.md
 ├── README.md
 ├── data/
+│   ├── README.md
 │   ├── conductor.npz
 │   ├── conductor_family.json.gz
 │   ├── height.npz
@@ -59,6 +60,7 @@
 | [.gitignore](.gitignore) | 임시 cache·lock·SQLite journal 제외 |
 | [README.ko.md](README.ko.md) | 한국어판: 파일 목록·환경·실행 순서·규약 |
 | [README.md](README.md) | 영어판: 파일 목록·환경·실행 순서·규약 |
+| [data/README.md](data/README.md) | Conductor 스냅샷 출처와 라이선스 |
 | [data/conductor.npz](data/conductor.npz) | 새 전체 계산의 weighted/unweighted·SE·pair 수·mask |
 | [data/conductor_family.json.gz](data/conductor_family.json.gz) | 고정 곡선 목록 입력 |
 | [data/height.npz](data/height.npz) | 새 전체 계산의 weighted/unweighted·SE·pair 수·mask |
@@ -147,7 +149,7 @@ python src/make_tables.py --data-dir work/reproduced/data --output-dir work/reco
 
 ## 입력과 결과의 위치
 
-- `data/conductor_family.json.gz`: [LMFDB](https://www.lmfdb.org/EllipticCurve/Q/) 고정 snapshot의 329998개 isogeny 대표곡선과 총 496582개 curve의 multiplicity.
+- `data/conductor_family.json.gz`: [LMFDB](https://www.lmfdb.org/EllipticCurve/Q/) 고정 snapshot의 329998개 isogeny 대표곡선과 총 496582개 curve의 multiplicity. 출처 및 CC BY-SA 4.0 표기는 [데이터 README](data/README.md)를 참고.
 - `data/height_family.json.gz`: 동봉 코드가 독립 열거한 primitive 모델 5422개.
 - `data/conductor.npz`, `data/height.npz`: 전체 새 계산 결과. Weighted/unweighted·SE·normalizer·pair 수·mask·metadata를 함께 저장한다.
 - `data/sample_counts_conductor.csv`, `data/sample_counts_height.csv`, `data/table1_residuals.csv`: 새 결과에서 계산한 세 표.

@@ -7,7 +7,7 @@
 
 ## File inventory and roles
 
-The package inventory lists **35 files**. Paths in the table are relative to the repository root.
+The package inventory lists **36 files**. Paths in the table are relative to the repository root.
 Update this inventory and the input/output descriptions whenever files are added, removed, moved, or renamed.
 
 ```text
@@ -17,6 +17,7 @@ Update this inventory and the input/output descriptions whenever files are added
 ├── README.ko.md
 ├── README.md
 ├── data/
+│   ├── README.md
 │   ├── conductor.npz
 │   ├── conductor_family.json.gz
 │   ├── height.npz
@@ -59,6 +60,7 @@ Update this inventory and the input/output descriptions whenever files are added
 | [.gitignore](.gitignore) | Excludes temporary caches, locks, and SQLite journals |
 | [README.ko.md](README.ko.md) | Korean README: file inventory, environment, execution order, and conventions |
 | [README.md](README.md) | English README: file inventory, environment, execution order, and conventions |
+| [data/README.md](data/README.md) | Conductor snapshot provenance and license |
 | [data/conductor.npz](data/conductor.npz) | Full computation results: weighted/unweighted statistics, SE, pair counts, and masks |
 | [data/conductor_family.json.gz](data/conductor_family.json.gz) | Frozen curve-family input |
 | [data/height.npz](data/height.npz) | Full computation results: weighted/unweighted statistics, SE, pair counts, and masks |
@@ -148,7 +150,7 @@ The default full result directory is `work/reproduced/data/` (`--output-dir` cha
 
 ## Input and output locations
 
-- `data/conductor_family.json.gz`: a frozen [LMFDB](https://www.lmfdb.org/EllipticCurve/Q/) snapshot with 329998 isogeny-class representatives and multiplicities for a total of 496582 curves.
+- `data/conductor_family.json.gz`: a frozen [LMFDB](https://www.lmfdb.org/EllipticCurve/Q/) snapshot with 329998 isogeny-class representatives and multiplicities for a total of 496582 curves. See the [data README](data/README.md) for provenance and CC BY-SA 4.0 licensing.
 - `data/height_family.json.gz`: 5422 primitive models independently enumerated by the bundled code.
 - `data/conductor.npz`, `data/height.npz`: full computation results, containing weighted/unweighted statistics, SE, normalizers, pair counts, masks, and metadata.
 - `data/sample_counts_conductor.csv`, `data/sample_counts_height.csv`, `data/table1_residuals.csv`: three tables computed from the results.
