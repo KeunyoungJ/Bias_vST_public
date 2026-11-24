@@ -175,6 +175,7 @@ def refresh_readme(root=BASE):
     files.sort()
     roles = {english_readme: '영어판: 파일 목록·환경·실행 순서·규약',
              korean_readme: '한국어판: 파일 목록·환경·실행 순서·규약',
+             'data/README.md': 'Conductor 스냅샷 출처와 라이선스',
              'requirements.txt': 'Python 의존성 버전; SageMath는 별도 설치',
              '.gitignore': '임시 cache·lock·SQLite journal 제외',
              '.gitattributes': '텍스트 LF·배열 및 압축 파일의 binary 처리'}
@@ -188,7 +189,8 @@ def refresh_readme(root=BASE):
         'reproduction_io.py': '다른 기존 출력 보존·동일 출력 재사용'}
     def role(f):
         name = f.name
-        if name in roles: return roles[name]
+        path = f.relative_to(root).as_posix()
+        if path in roles: return roles[path]
         if f.parent.name == 'src': return source_roles.get(name, 'Python 코드')
         if f.parent.name == 'tests': return '재현 코드 회귀 테스트'
         if name.endswith('_family.json.gz'): return '고정 곡선 목록 입력'
@@ -200,6 +202,7 @@ def refresh_readme(root=BASE):
     english_roles = {
         '한국어판: 파일 목록·환경·실행 순서·규약': 'Korean README: file inventory, environment, execution order, and conventions',
         '영어판: 파일 목록·환경·실행 순서·규약': 'English README: file inventory, environment, execution order, and conventions',
+        'Conductor 스냅샷 출처와 라이선스': 'Conductor snapshot provenance and license',
         'Python 의존성 버전; SageMath는 별도 설치': 'Python dependency versions; install SageMath separately',
         '임시 cache·lock·SQLite journal 제외': 'Excludes temporary caches, locks, and SQLite journals',
         '텍스트 LF·배열 및 압축 파일의 binary 처리': 'LF text files; binary handling for arrays and compressed files',

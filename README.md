@@ -2,6 +2,8 @@
 
 [Korean version](README.ko.md)
 
+This repository accompanies the manuscript *Lower-order Bias in the Vertical Sato–Tate distribution and murmurations* by Keunyoung Jeong, Gyeongwon Oh, and Minseog Yang. Cite the manuscript and the repository commit used for your results.
+
 <!-- FILES_BEGIN -->
 <a id="file-map"></a>
 
@@ -110,28 +112,32 @@ SE denotes the analytic standard error at the curve level, accounting for curve 
 
 ## Quick reproduction from the bundled results
 
-Run these commands from the directory containing this README. Figure and table regeneration uses Python with the NumPy and Matplotlib versions in `requirements.txt`; it does not require SageMath. The reference environment was Python 3.12.11, SageMath 10.6, NumPy 2.3.2, Matplotlib 3.10.5 on WSL/Linux. A fresh installation on a different system has not been verified.
+Run these commands from the repository root using Python 3.11 or 3.12. This procedure uses the bundled NPZ files and the Python dependencies in `requirements.txt`.
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install -r requirements.txt
 python src/bvst_data.py
+python -m unittest discover -s tests
 python src/make_figures.py
 python src/make_tables.py
 ```
 
 Validation requires both curve-family inputs and both NPZ files. To check only one family, use `--family conductor` or `--family height`. Generated figures and tables go to `work/reproduced/plots/` and `work/reproduced/tables/`; the bundled files are unchanged.
 
-For the lightweight regression tests, run `python -m unittest discover -s tests`. They use synthetic data and do not require SageMath.
-
 ## Independent arithmetic recomputation
 
-Use a SageMath environment on Linux or WSL with the Python dependencies installed in Sage's Python environment. Start with a small run if desired:
+The reference full run used SageMath 10.6, Python 3.12.11, and NumPy 2.3.2 on WSL/Linux. Use `sage -python` for arithmetic and the virtual environment above for the figures and tables. Run the small examples first to check both curve families.
 
 ```bash
+sage -python src/recompute_data.py --family conductor --scope smoke --workers 2
 sage -python src/recompute_data.py --family height --scope smoke --workers 2
 ```
 
-For the full rerun, use the frozen inputs shipped in `data/`:
+To check resumption, append `--max-batches 1` to the first invocation for a family, then repeat the original command to finish. Start each family with a fresh checkpoint directory for this check.
+
+The full rerun uses the frozen inputs in `data/`.
 
 ```bash
 sage -python src/recompute_data.py --family conductor --scope full --workers 4
@@ -150,7 +156,7 @@ The default full result directory is `work/reproduced/data/` (`--output-dir` cha
 
 ## Input and output locations
 
-- `data/conductor_family.json.gz`: a frozen [LMFDB](https://www.lmfdb.org/EllipticCurve/Q/) snapshot with 329998 isogeny-class representatives and multiplicities for a total of 496582 curves. See the [data README](data/README.md) for provenance and CC BY-SA 4.0 licensing.
+- `data/conductor_family.json.gz`: a frozen LMFDB snapshot with 329998 isogeny-class representatives and multiplicities for a total of 496582 curves. See the [data README](data/README.md) for provenance and CC BY-SA 4.0 licensing.
 - `data/height_family.json.gz`: 5422 primitive models independently enumerated by the bundled code.
 - `data/conductor.npz`, `data/height.npz`: full computation results, containing weighted/unweighted statistics, SE, normalizers, pair counts, masks, and metadata.
 - `data/sample_counts_conductor.csv`, `data/sample_counts_height.csv`, `data/table1_residuals.csv`: three tables computed from the results.
@@ -192,4 +198,10 @@ All 12 entries of Table 1 agree to six decimal places. Resuming the completed co
 
 Small-scale validation included 114 direct point counts, 16 direct profile checks, boundary checks, multiplicities, means/SE, actual interruption/resumption, and tamper detection.
 Both families also passed arithmetic computation in an isolated copy with access to the original repository data and network reads blocked.
-This verifies independent execution in the existing Sage environment; dependency installation on a fresh operating system has not been verified.
+These November 3 checks used the WSL/Linux reference environment.
+
+## Clean-checkout verification on 2026-11-24
+
+On macOS, a fresh Python 3.11.5 virtual environment with NumPy 2.3.2 and Matplotlib 3.10.5 passed the data check and all three regression tests. All three regenerated CSV files matched the bundled files byte for byte. The seven figures regenerated in both PNG and PDF and matched the original renderer byte for byte when run in the same Mac environment. Rendering bytes can vary between this environment and the WSL/Linux reference.
+
+Smoke runs with SageMath 10.4 and NumPy 1.26.3 processed 24 records per family using two workers. Both resumed after a one-batch pause. Repeating each completed run added zero coefficients and batches and produced the same NPZ bytes.

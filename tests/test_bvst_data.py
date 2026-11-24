@@ -106,6 +106,7 @@ class ReadmeTest(unittest.TestCase):
                     path = root/name
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.touch()
+                (root/'data/README.md').touch()
                 bv.refresh_readme(root)
                 en = (root/english).read_text(encoding='utf-8')
                 ko = (root/korean).read_text(encoding='utf-8')
@@ -114,6 +115,7 @@ class ReadmeTest(unittest.TestCase):
                 self.assertIn('## 현재 파일 위치와 역할', ko)
                 self.assertIn(f'[{prefix}data/kept file.csv](data/kept%20file.csv)', en)
                 self.assertIn(f'[{prefix}{korean}]({korean}) | Korean README', en)
+                self.assertIn(f'[{prefix}data/README.md](data/README.md) | Conductor snapshot provenance and license', en)
                 self.assertIn('Outside of the inventory.', en)
                 for name in files[:-2]+files[-1:]:
                     self.assertNotIn(Path(name).name, en)

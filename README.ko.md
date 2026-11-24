@@ -2,6 +2,8 @@
 
 [English version](README.md)
 
+이 저장소는 Keunyoung Jeong, Gyeongwon Oh, Minseog Yang의 원고 *Lower-order Bias in the Vertical Sato–Tate distribution and murmurations*의 수치 실험을 재현한다. 결과를 인용할 때 원고와 실행에 사용한 저장소 커밋을 함께 표기한다.
+
 <!-- FILES_BEGIN -->
 <a id="file-map"></a>
 
@@ -109,26 +111,30 @@ SE는 curve 단위 analytic 표준오차이며 isogeny class의 curve multiplici
 
 ## 동봉된 결과로 그림·표 재현
 
-이 README가 있는 디렉터리에서 실행한다. 동봉 NPZ로 그림과 표를 만드는 데는 SageMath가 필요 없다. 검증 환경은 WSL/Linux의 Python 3.12.11, SageMath 10.6, NumPy 2.3.2, Matplotlib 3.10.5다. 다른 운영체제에서 새로 설치하는 과정까지 검증한 것은 아니다.
+저장소 루트에서 Python 3.11 또는 3.12로 실행한다. 이 절차는 동봉 NPZ와 `requirements.txt`의 Python 의존성을 사용한다.
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install -r requirements.txt
 python src/bvst_data.py
+python -m unittest discover -s tests
 python src/make_figures.py
 python src/make_tables.py
 ```
 
 검증에는 두 곡선 집합 입력과 두 NPZ가 모두 필요하다. 하나만 확인하려면 `--family conductor` 또는 `--family height`를 지정한다. 그림과 표는 `work/reproduced/plots/`와 `work/reproduced/tables/`에 저장되며 동봉 파일은 그대로 유지된다.
 
-회귀 테스트는 `python -m unittest discover -s tests`로 실행한다. SageMath 없이 테스트용 데이터만 사용한다.
-
 ## 산술 데이터 독립 재계산
 
-Linux/WSL에서 SageMath와 그 Python 환경에 의존성을 설치한다. 먼저 작은 smoke run을 돌릴 수 있다.
+전체 계산을 검증한 환경은 WSL/Linux의 SageMath 10.6, Python 3.12.11, NumPy 2.3.2다. 원계산에는 `sage -python`을, 그림과 표 생성에는 위 Python 가상환경을 쓴다. 두 family에서 소규모 계산을 먼저 확인한다.
 
 ```bash
+sage -python src/recompute_data.py --family conductor --scope smoke --workers 2
 sage -python src/recompute_data.py --family height --scope smoke --workers 2
 ```
+
+재개를 확인하려면 각 family의 새 체크포인트에서 첫 실행에 `--max-batches 1`을 붙인 뒤, 위의 원래 명령을 실행해 완료한다.
 
 전체 재계산은 동봉된 `data/`의 고정 입력을 사용한다.
 
@@ -149,7 +155,7 @@ python src/make_tables.py --data-dir work/reproduced/data --output-dir work/reco
 
 ## 입력과 결과의 위치
 
-- `data/conductor_family.json.gz`: [LMFDB](https://www.lmfdb.org/EllipticCurve/Q/) 고정 snapshot의 329998개 isogeny 대표곡선과 총 496582개 curve의 multiplicity. 출처 및 CC BY-SA 4.0 표기는 [데이터 README](data/README.md)를 참고.
+- `data/conductor_family.json.gz`: LMFDB 고정 snapshot의 329998개 isogeny 대표곡선과 총 496582개 curve의 multiplicity. 출처와 CC BY-SA 4.0 조건은 [데이터 README](data/README.md)에 있다.
 - `data/height_family.json.gz`: 동봉 코드가 독립 열거한 primitive 모델 5422개.
 - `data/conductor.npz`, `data/height.npz`: 전체 새 계산 결과. Weighted/unweighted·SE·normalizer·pair 수·mask·metadata를 함께 저장한다.
 - `data/sample_counts_conductor.csv`, `data/sample_counts_height.csv`, `data/table1_residuals.csv`: 새 결과에서 계산한 세 표.
@@ -191,4 +197,10 @@ Table 1의 12개 값은 소수점 여섯 자리까지 모두 같다. 완료 후 
 
 소규모 검증은 직접 점 세기 114건·직접 profile 16건, 경계·multiplicity·평균/SE, 실제 중단/재개와 변조 검출을 포함한다.
 원 저장소 자료와 네트워크 읽기를 차단한 분리 복사본에서 두 family의 원계산도 통과했다.
-이는 현재 Sage 환경에서의 독립 실행 검증이며 새 운영체제에서 의존성 설치까지 검증한 것은 아니다.
+11월 3일 검증은 위의 WSL/Linux 기준 환경에서 수행했다.
+
+## 2026-11-24 새 clone 검증
+
+macOS에서 Python 3.11.5 가상환경을 새로 만들고 NumPy 2.3.2와 Matplotlib 3.10.5를 설치했다. 데이터 검사와 회귀 테스트 3개를 통과했고, 재생성한 CSV 3개는 모두 동봉본과 바이트 단위로 일치했다. 그림 7개는 PNG·PDF 두 형식으로 생성됐다. 같은 Mac 환경에서 기존 생성 코드의 출력과 바이트 단위로 일치했으며, WSL/Linux 기준본과는 렌더링 바이트가 달라질 수 있다.
+
+SageMath 10.4와 NumPy 1.26.3으로 두 family에서 각각 24개 레코드를 2개 worker로 계산했다. 두 실행 모두 첫 배치에서 멈춘 뒤 정상적으로 재개됐다. 완료 후 같은 명령을 반복했을 때 추가 계수와 배치는 0개였고 NPZ 바이트는 같았다.

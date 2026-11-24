@@ -2,8 +2,10 @@
 
 ## `conductor_family.json.gz`
 
-This snapshot is derived from the [elliptic curve data over ℚ](https://www.lmfdb.org/EllipticCurve/Q/) provided by **The LMFDB Collaboration**, *The L-functions and Modular Forms Database*. See [LMFDB's citation guidance](https://www.lmfdb.org/citation).
+This snapshot is derived from the rational elliptic curve table `ec_curvedata` in The LMFDB Collaboration's *The L-functions and Modular Forms Database*. The underlying curves in this conductor range were computed by John Cremona. [LMFDB table](https://www.lmfdb.org/api/ec_curvedata/) · [Source of the curve data](https://www.lmfdb.org/knowledge/show/rcs.source.ec.q) · [LMFDB citation guidance](https://www.lmfdb.org/citation)
 
-For this project, the conductor-ordered sample is restricted to the half-open shells `[X, 2X)` for `X = 5000, 10000, 20000, 40000`. The snapshot stores 329,998 isogeny-class representatives with multiplicities representing 496,582 curves. It is a project-specific selection and reduction of the source data, packaged as gzip-compressed JSON, not an unmodified LMFDB export.
+The snapshot combines frozen CM and non-CM selections in the conductor shells `[X, 2X)` for `X = 5000, 10000, 20000, 40000`. It keeps 329,998 isogeny-class representatives with multiplicities for 496,582 curves and adds each representative's shell label. The selected records are stored as gzip-compressed JSON.
 
-LMFDB identifies its data as [CC BY-SA](https://www.lmfdb.org/api/options). This adapted snapshot is distributed under the [Creative Commons Attribution–ShareAlike 4.0 International license (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/). This notice applies to the snapshot named above; it does not set a license for the source code or the repository as a whole.
+The conductor snapshot is distributed under Creative Commons Attribution–ShareAlike 4.0 International (CC BY-SA 4.0). When sharing it, provide attribution and a license link. When sharing an adaptation, also identify your changes and use the same or a compatible license. [LMFDB data terms](https://www.lmfdb.org/api/options) · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+
+The repository code has no separate software license.
