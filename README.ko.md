@@ -179,7 +179,7 @@ Conductor shape의 파일명 `Y40000`은 기존 TeX 호환을 위해 유지하�
 
 ## Bin 선택과 표
 
-Weighted shape는 앞 세 shell 중 둘 이상에서 $|B|>2\operatorname{SE}(B)$를 통과한 discovery와 마지막 shell의 같은 조건을 사용한다.
+Weighted shape는 앞 세 shell 중 둘 이상에서 $|B|>2\mathrm{SE}(B)$를 통과한 discovery와 마지막 shell의 같은 조건을 사용한다.
 Unweighted shape는 마지막 shell에서 weighted와 unweighted 두 진폭 조건을 통과한 common bin을 사용하며 discovery를 추가하지 않는다.
 $X=40000$의 weighted conductor/height는 96/61개, unweighted conductor/height는 90/17개다.
 Height의 unweighted 17개와 weighted 표시 61개의 교집합은 13개다.

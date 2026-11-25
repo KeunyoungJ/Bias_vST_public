@@ -180,7 +180,7 @@ The four normalized-shape plots share title, axis, legend, and colorbar formats,
 
 ## Bin selection and tables
 
-Weighted shapes use a discovery condition requiring $|B|>2\operatorname{SE}(B)$ in at least two of the first three shells, together with the same condition in the final shell.
+Weighted shapes use a discovery condition requiring $|B|>2\mathrm{SE}(B)$ in at least two of the first three shells, together with the same condition in the final shell.
 Unweighted shapes use the common bins passing both weighted and unweighted amplitude conditions in the final shell, without an additional discovery condition.
 At $X=40000$, the weighted conductor/height plots contain 96/61 bins, and the unweighted conductor/height plots contain 90/17 bins.
 The 17 unweighted height bins and the 61 displayed weighted height bins have an intersection of 13 bins.
